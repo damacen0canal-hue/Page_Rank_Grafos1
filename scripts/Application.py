@@ -1,3 +1,6 @@
+#O centro matemático da aplicação está entre as linhas 145-209.
+# O restante é interface para a utilização do usuário.
+
 import tkinter as tk
 from tkinter import simpledialog, messagebox
 import copy
