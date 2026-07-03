@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import simpledialog, messagebox
-import networkx as nx
 import copy
 
 class PageRankApp(tk.Tk):
@@ -144,21 +143,70 @@ class PageRankApp(tk.Tk):
             self.redraw()
 
     def calcular_pagerank(self):
-        G = nx.DiGraph()
-        # Adiciona nós e setas no NetworkX
-        for nid, d in self.nodes.items(): 
-            G.add_node(d['name'])
-        for (u, v), w in self.edges.items(): 
-            G.add_edge(self.nodes[u]['name'], self.nodes[v]['name'], weight=w)
-            
-        if not G.nodes: 
+        if not self.nodes: 
             return messagebox.showwarning("Aviso", "Crie pelo menos um nó!")
+
+        # 1. Configurações do Algoritmo
+        d = 0.85          # Fator de amortecimento (damping factor)
+        tol = 0.0001      # Tolerância para convergência
+        max_iter = 100    # Limite máximo de iterações
+        N = len(self.nodes)
+
+        # 2. Inicialização: todos começam com PageRank igual a 1/N
+        pr = {nid: 1.0 / N for nid in self.nodes}
+
+        # 3. Preparação dos dados: 
+        # a) Somar os pesos de todas as setas que SAEM de cada nó
+        soma_pesos_saida = {nid: 0.0 for nid in self.nodes}
+        for (origem, destino), peso in self.edges.items():
+            soma_pesos_saida[origem] += peso
+
+        # b) Mapear quem aponta para quem (para facilitar o cálculo reverso)
+        # Formato: {destino: [(origem, peso), ...]}
+        in_edges = {nid: [] for nid in self.nodes}
+        for (origem, destino), peso in self.edges.items():
+            in_edges[destino].append((origem, peso))
+
+        # 4. O Motor Iterativo do PageRank
+        for iteracao in range(max_iter):
+            antigo_pr = pr.copy()
+            erro_total = 0.0
             
-        # Calcula o ranking
-        pr = nx.pagerank(G, weight='weight', tol=0.0001, max_iter=100)
-        ranking = "\n".join([f"{i+1}º - {k}: {v:.4f}" for i, (k, v) in enumerate(sorted(pr.items(), key=lambda x: x[1], reverse=True))])
+            # Tratar "Dangling Nodes" (nós que não apontam para ninguém)
+            # A regra diz que a nota deles vaza e é dividida igualmente para a rede toda
+            soma_dangling = 0.0
+            for nid in self.nodes:
+                if soma_pesos_saida[nid] == 0:
+                    soma_dangling += antigo_pr[nid]
+            
+            # Atualizar a nota de cada nó
+            for nid in self.nodes:
+                soma_recebida = 0.0
+                
+                # Olha para todo mundo que aponta para este nó
+                for origem, peso in in_edges[nid]:
+                    # Calcula a proporção do peso dessa seta em relação ao total que sai da origem
+                    fatia = peso / soma_pesos_saida[origem]
+                    soma_recebida += antigo_pr[origem] * fatia
+                
+                # A Fórmula do PageRank
+                pr[nid] = (1 - d) / N + d * (soma_recebida + (soma_dangling / N))
+                
+                # Soma a diferença entre a nota velha e a nova para checar a estabilidade
+                erro_total += abs(pr[nid] - antigo_pr[nid])
+            
+            # Critério de Parada: se as notas mudaram menos que a tolerância, o sistema estabilizou
+            if erro_total < tol:
+                print(f"Convergiu na iteração {iteracao + 1}")
+                break
+
+        # 5. Formatação dos Resultados
+        # Troca os IDs (1, 2, 3...) pelos nomes reais que o usuário deu (Ex: "Página A")
+        pr_nomes = {self.nodes[nid]['name']: score for nid, score in pr.items()}
         
-        # Cria uma nova janela limpa com os resultados (estilo aba)
+        ranking = "\n".join([f"{i+1}º - {k}: {v:.4f}" for i, (k, v) in enumerate(sorted(pr_nomes.items(), key=lambda x: x[1], reverse=True))])
+        
+        # 6. Exibir na Tela (Nova Janela)
         nova_janela = tk.Toplevel(self)
         nova_janela.title("Resultado do PageRank")
         nova_janela.geometry("350x450")
@@ -168,7 +216,7 @@ class PageRankApp(tk.Tk):
         
         texto_resultado = tk.Text(nova_janela, font=("Arial", 12), bg="#f0f0f0", relief=tk.FLAT)
         texto_resultado.insert(tk.END, ranking)
-        texto_resultado.config(state=tk.DISABLED) # Impede edição do texto
+        texto_resultado.config(state=tk.DISABLED)
         texto_resultado.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
 if __name__ == "__main__":
