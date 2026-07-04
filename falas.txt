@@ -1,6 +1,3 @@
-
-# FALAS DA APRESENTAÇÃO:
-
 slide 1: Olá, gostaria de cumprimentar a todos. Hoje, o nosso grupo, composto por..., vai dar início à apresentação do nosso seminário para a disciplina de Grafos e Aplicações. O tema que escolhemos abordar é o algoritmo PageRank, analisando como a estrutura matemática dos grafos é utilizada para definir a relevância e a importância das páginas na Web.
 
 slide 2: Para entendermos o tema e a nossa motivação, precisamos voltar um pouco no tempo. O PageRank é o algoritmo clássico de análise de links criado pelos fundadores do Google. A grande motivação por trás dele surgiu dessa pergunta: como organizar e ordenar bilhões de páginas espalhadas na internet de forma justa e automatizada, sem depender apenas de palavras-chave? No começo da internet, as buscas dependiam apenas de texto repetido, o que tornava os resultados fáceis de burlar e pouco eficientes. O PageRank revolucionou esse cenário ao focar na estrutura de links, interpretando cada link de uma página para outra como se fosse um 'voto' de confiança e de relevância na rede.
